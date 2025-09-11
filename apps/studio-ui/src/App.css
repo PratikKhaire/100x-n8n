@@ -1,0 +1,43 @@
+/* 8n8 Studio UI Styles */
+
+.studio-container {
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+.workflow-input {
+  width: 80%;
+  height: 200px;
+  margin-bottom: 10px;
+  padding: 10px;
+  font-family: monospace;
+}
+
+.execute-button {
+  padding: 10px 20px;
+  font-size: 16px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.execute-button:hover {
+  background-color: #0056b3;
+}
+
+.response-container {
+  background-color: #f0f0f0;
+  padding: 10px;
+  border-radius: 5px;
+  white-space: pre-wrap;
+  margin-top: 20px;
+}
+
+.workflow-editor {
+  width: 100vw;
+  height: 100vh;
+  border: 1px solid #ddd;
+  margin-top: 20px;
+}
