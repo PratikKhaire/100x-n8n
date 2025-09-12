@@ -6,6 +6,6 @@
     "module": "ESNext",
     "moduleResolution": "bundler"
   },
-  "include": ["src"],
+  "include": ["src", "../../packages/engine/src/engine.ts"],
   "exclude": ["node_modules", "dist"]
 }
