@@ -92,9 +92,10 @@ export default function App() {
   // Modal states
   const [showTriggerModal, setShowTriggerModal] = useState(false);
   const [showActionModal, setShowActionModal] = useState(false);
+  const [showWorkflowSettings, setShowWorkflowSettings] = useState(false);
   
   // Workflow metadata
-  const [workflowName] = useState('Untitled Workflow');
+  const [workflowName, setWorkflowName] = useState('Untitled Workflow');
   const [isExecuting, setIsExecuting] = useState(false);
   const [executionHistory, setExecutionHistory] = useState<any[]>([]);
 
@@ -194,7 +195,7 @@ export default function App() {
   };
 
   // Node click handler
-  const onNodeClick = (_event: any, node: Node) => {
+  const onNodeClick = (event: any, node: Node) => {
     if (node.data.type === 'plus') {
       setShowActionModal(true);
     }
