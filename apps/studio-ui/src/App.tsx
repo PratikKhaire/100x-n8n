@@ -1,111 +1,63 @@
-import { useState, useCallback } from 'react';
-import { 
-  ReactFlow, 
-  applyNodeChanges, 
-  applyEdgeChanges, 
-  addEdge, 
-  NodeChange, 
-  EdgeChange,
-  Node,
-  Edge,
+import React, { useState, useCallback } from 'react';
+import {
+  ReactFlow,
+  Background,
   Controls,
   MiniMap,
-  Background,
+  addEdge,
+  Connection,
+  Edge,
+  Node,
+  OnNodesChange,
+  OnEdgesChange,
+  applyNodeChanges,
+  applyEdgeChanges,
   BackgroundVariant,
-  Panel,
-  Connection
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import './App.css';
 
-// Enhanced Trigger Types with more options
-const triggerTypes = [
-  { id: 'manual', name: 'Manual Trigger', description: 'Start workflow manually', icon: '▶️', color: '#4299e1' },
-  { id: 'webhook', name: 'Webhook', description: 'HTTP webhook trigger', icon: '🔗', color: '#48bb78' },
-  { id: 'schedule', name: 'Schedule', description: 'Time-based trigger', icon: '⏰', color: '#ed8936' },
-  { id: 'email', name: 'Email', description: 'Email received trigger', icon: '📧', color: '#9f7aea' }
-];
+// Import custom hooks
+import { useWorkflowAPI } from './hooks/useWorkflowAPI';
 
-// Enhanced Action Services
-const actionServices = [
-  { id: 'http', name: 'HTTP Request', description: 'Make HTTP API calls', icon: '🌐', color: '#4299e1' },
-  { id: 'email', name: 'Send Email', description: 'Send email notifications', icon: '📧', color: '#ed8936' },
-  { id: 'database', name: 'Database', description: 'Database operations', icon: '🗄️', color: '#48bb78' },
-  { id: 'telegram', name: 'Telegram', description: 'Send Telegram messages', icon: '📱', color: '#0088cc' },
-  { id: 'slack', name: 'Slack', description: 'Send Slack messages', icon: '💬', color: '#4a154b' },
-  { id: 'transform', name: 'Transform Data', description: 'Data transformation', icon: '🔄', color: '#9f7aea' }
-];
+// Import utility functions
+import { createTriggerNode, createActionNode, updateNodeStatus } from './utils/nodeUtils';
 
-// Custom Node Components
-const TriggerNode = ({ data }: { data: any }) => (
-  <div className={`custom-node trigger-node ${data.status || 'ready'}`}>
-    <div className="node-icon" style={{ backgroundColor: data.color }}>{data.icon}</div>
-    <div className="node-content">
-      <div className="node-title">{data.label}</div>
-      <div className="node-subtitle">{data.type}</div>
-    </div>
-    <div className="node-status">{data.status || 'Ready'}</div>
-  </div>
-);
+// Import components
+import { customNodeTypes } from './components/Nodes';
+import { TriggerModal, ActionModal } from './components/Modals';
+import { WorkflowControlPanel, ExecutionPanel } from './components/Panels';
+import { ArchitectureSummary } from './components/ArchitectureSummary';
 
-const ActionNode = ({ data }: { data: any }) => (
-  <div className={`custom-node action-node ${data.status || 'ready'}`}>
-    <div className="node-icon" style={{ backgroundColor: data.color }}>{data.icon}</div>
-    <div className="node-content">
-      <div className="node-title">{data.label}</div>
-      <div className="node-subtitle">{data.type}</div>
-    </div>
-    <div className="node-status">{data.status || 'Ready'}</div>
-  </div>
-);
+// Import types
+import { TriggerType, ActionService, ExecutionResult } from './types/workflow';
 
-const ConditionNode = ({ data }: { data: any }) => (
-  <div className="custom-node condition-node">
-    <div className="node-icon">❓</div>
-    <div className="node-content">
-      <div className="node-title">{data.label || 'IF Condition'}</div>
-      <div className="node-subtitle">Boolean Logic</div>
-    </div>
-    <div className="condition-outputs">
-      <div className="output true">True</div>
-      <div className="output false">False</div>
-    </div>
-  </div>
-);
+import './index.css';
 
-const customNodeTypes = {
-  trigger: TriggerNode,
-  action: ActionNode,
-  condition: ConditionNode,
-};
-
-// Initial empty state
-const initialNodes: Node[] = [];
-const initialEdges: Edge[] = [];
-
-export default function App() {
+const App: React.FC = () => {
   // Core ReactFlow state
-  const [nodes, setNodes] = useState<Node[]>(initialNodes);
-  const [edges, setEdges] = useState<Edge[]>(initialEdges);
-  const [response, setResponse] = useState('');
+  const [nodes, setNodes] = useState<Node[]>([]);
+  const [edges, setEdges] = useState<Edge[]>([]);
   
-  // Modal states
+  // Modal state
   const [showTriggerModal, setShowTriggerModal] = useState(false);
   const [showActionModal, setShowActionModal] = useState(false);
+  const [showArchSummary, setShowArchSummary] = useState(false);
   
-  // Workflow metadata
-  const [workflowName] = useState('Untitled Workflow');
+  // Execution state
+  const [executionResults, setExecutionResults] = useState<ExecutionResult[]>([]);
   const [isExecuting, setIsExecuting] = useState(false);
-  const [executionHistory, setExecutionHistory] = useState<any[]>([]);
 
-  // ReactFlow handlers
-  const onNodesChange = useCallback(
-    (changes: NodeChange[]) => setNodes((nds) => applyNodeChanges(changes, nds)),
+  // Custom hooks
+  const { saveWorkflow, executeWorkflow } = useWorkflowAPI();
+
+  // ReactFlow event handlers
+  const onNodesChange: OnNodesChange = useCallback(
+    (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
     []
   );
 
-  const onEdgesChange = useCallback(
-    (changes: EdgeChange[]) => setEdges((eds) => applyEdgeChanges(changes, eds)),
+  const onEdgesChange: OnEdgesChange = useCallback(
+    (changes) => setEdges((eds) => applyEdgeChanges(changes, eds)),
     []
   );
 
@@ -114,328 +66,268 @@ export default function App() {
     []
   );
 
-  // Start workflow creation
-  const addFirstStep = () => {
-    setShowTriggerModal(true);
-  };
-
-  // Add trigger node
-  const handleTriggerSelect = (trigger: any) => {
-    const triggerNode: Node = {
-      id: 'trigger-1',
-      type: 'trigger',
-      position: { x: 250, y: 100 },
-      data: { 
-        label: trigger.name,
-        type: trigger.id,
-        icon: trigger.icon,
-        color: trigger.color,
-        status: 'Ready'
-      },
-    };
-    
-    setNodes([triggerNode]);
-    setShowTriggerModal(false);
-    
-    // Auto-add a plus node for the next step
-    setTimeout(() => {
-      const plusNode: Node = {
-        id: 'plus-1',
-        type: 'default',
-        position: { x: 250, y: 250 },
-        data: { label: '+ Add Action', type: 'plus' },
-        style: { 
-          backgroundColor: '#f0f0f0', 
-          border: '2px dashed #ccc',
-          borderRadius: '50%',
-          width: 80,
-          height: 80,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'pointer'
-        }
-      };
-      
-      setNodes(prev => [...prev, plusNode]);
-      
-      // Connect trigger to plus node
-      const edge: Edge = {
-        id: 'trigger-to-plus',
-        source: 'trigger-1',
-        target: 'plus-1',
-      };
-      setEdges([edge]);
-    }, 100);
-  };
-
-  // Handle action selection
-  const handleActionSelect = (action: any) => {
-    const actionNode: Node = {
-      id: `action-${Date.now()}`,
-      type: 'action',
-      position: { x: 250, y: 250 },
-      data: { 
-        label: action.name,
-        type: action.id,
-        icon: action.icon,
-        color: action.color,
-        status: 'Ready'
-      },
-    };
-    
-    // Remove plus nodes and add action node
-    setNodes(prev => {
-      const filtered = prev.filter(n => n.data.type !== 'plus');
-      return [...filtered, actionNode];
-    });
-    
-    setShowActionModal(false);
-  };
-
-  // Node click handler
-  const onNodeClick = (_event: any, node: Node) => {
-    if (node.data.type === 'plus') {
-      setShowActionModal(true);
-    }
-  };
-
-  // Save workflow
-  const saveWorkflow = async () => {
+  // Workflow management functions
+  const handleSaveWorkflow = async () => {
     try {
       const workflowData = {
-        name: workflowName,
-        nodes: JSON.stringify(nodes),
-        edges: JSON.stringify(edges)
+        name: 'My Workflow',
+        description: 'Generated workflow',
+        nodes: nodes.map(node => ({
+          id: node.id,
+          type: (node.type || 'action') as 'trigger' | 'action' | 'condition',
+          position: node.position,
+          data: {
+            label: String(node.data.label || ''),
+            type: String(node.data.type || ''),
+            icon: String(node.data.icon || ''),
+            color: String(node.data.color || ''),
+            status: (node.data.status as 'ready' | 'executing' | 'executed' | 'error') || 'ready'
+          }
+        })),
+        edges: edges.map(edge => ({
+          id: edge.id,
+          source: edge.source,
+          target: edge.target
+        }))
       };
       
-      const res = await fetch('http://localhost:3002/api/v1/workflows', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(workflowData),
-      });
-      
-      if (res.ok) {
-        setResponse('✅ Workflow saved successfully!');
-      } else {
-        throw new Error('Failed to save workflow');
-      }
-    } catch (error: any) {
-      setResponse(`❌ Error saving: ${error.message}`);
+      await saveWorkflow(workflowData);
+      alert('Workflow saved successfully!');
+    } catch (error) {
+      alert('Failed to save workflow');
     }
   };
 
-  // Execute workflow
-  const executeWorkflow = async () => {
+  const handleExecuteWorkflow = async () => {
+    if (nodes.length === 0) return;
+    
     setIsExecuting(true);
+    
+    // Update all nodes to executing status
+    setNodes(currentNodes => 
+      currentNodes.map(node => updateNodeStatus(node, 'executing'))
+    );
+
     try {
-      const workflowData = { nodes, edges };
-      const res = await fetch('http://localhost:3002/workflow/execute', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(workflowData),
-      });
+      const workflowData = {
+        name: 'Execution Test',
+        nodes: nodes.map(node => ({
+          id: node.id,
+          type: (node.type || 'action') as 'trigger' | 'action' | 'condition',
+          position: node.position,
+          data: {
+            label: String(node.data.label || ''),
+            type: String(node.data.type || ''),
+            icon: String(node.data.icon || ''),
+            color: String(node.data.color || ''),
+            status: (node.data.status as 'ready' | 'executing' | 'executed' | 'error') || 'ready'
+          }
+        })),
+        edges: edges.map(edge => ({
+          id: edge.id,
+          source: edge.source,
+          target: edge.target
+        }))
+      };
+
+      const result = await executeWorkflow(workflowData);
       
-      const data = await res.json();
-      setResponse(`✅ Execution completed: ${JSON.stringify(data, null, 2)}`);
-      setExecutionHistory(prev => [...prev, { timestamp: new Date(), result: data }]);
+      // Update nodes to success status
+      setNodes(currentNodes => 
+        currentNodes.map(node => updateNodeStatus(node, 'executed'))
+      );
+
+      // Add execution result
+      const executionResult: ExecutionResult = {
+        id: `exec-${Date.now()}`,
+        timestamp: new Date(),
+        status: 'success',
+        result: result,
+        message: 'Workflow executed successfully'
+      };
       
-      // Update node statuses
-      setNodes(prev => prev.map(node => ({
-        ...node,
-        data: { ...node.data, status: 'Executed' }
-      })));
+      setExecutionResults(prev => [executionResult, ...prev]);
       
-    } catch (error: any) {
-      setResponse(`❌ Execution failed: ${error.message}`);
+    } catch (error) {
+      // Update nodes to error status
+      setNodes(currentNodes => 
+        currentNodes.map(node => updateNodeStatus(node, 'error'))
+      );
+
+      const executionResult: ExecutionResult = {
+        id: `exec-${Date.now()}`,
+        timestamp: new Date(),
+        status: 'error',
+        result: null,
+        message: error instanceof Error ? error.message : 'Execution failed'
+      };
+      
+      setExecutionResults(prev => [executionResult, ...prev]);
     } finally {
       setIsExecuting(false);
     }
   };
 
-  // Clear workflow
-  const clearWorkflow = () => {
+  const handleClearWorkflow = () => {
     setNodes([]);
     setEdges([]);
-    setResponse('');
-    setExecutionHistory([]);
+    setExecutionResults([]);
+  };
+
+  // Node creation handlers
+  const handleSelectTrigger = (trigger: TriggerType) => {
+    const newNode = createTriggerNode(trigger);
+    setNodes(prev => [...prev, newNode]);
+  };
+
+  const handleSelectAction = (action: ActionService) => {
+    const newNode = createActionNode(action);
+    setNodes(prev => [...prev, newNode]);
+  };
+
+  // Create workflow data object for components
+  const workflowData = {
+    name: 'Current Workflow',
+    nodes: nodes.map(node => ({
+      id: node.id,
+      type: (node.type || 'action') as 'trigger' | 'action' | 'condition',
+      position: node.position,
+      data: {
+        label: String(node.data.label || ''),
+        type: String(node.data.type || ''),
+        icon: String(node.data.icon || ''),
+        color: String(node.data.color || ''),
+        status: (node.data.status as 'ready' | 'executing' | 'executed' | 'error') || 'ready'
+      }
+    })),
+    edges: edges.map(edge => ({
+      id: edge.id,
+      source: edge.source,
+      target: edge.target
+    }))
   };
 
   return (
-    <div className="studio-container">
-      <div className="studio-header">
-        <h1>🚀 8n8 Workflow Builder</h1>
-        <p>Create powerful automation workflows with drag-and-drop simplicity</p>
-      </div>
-
-      {/* Workflow Editor */}
-      <div className="workflow-editor">
-        {nodes.length === 0 ? (
-          <div className="empty-state">
-            <div className="add-first-step" onClick={addFirstStep}>
-              <div className="plus-circle">+</div>
-              <p>Add first step to start building your workflow</p>
+    <div className="flex flex-col h-screen bg-gradient-to-br from-slate-50 to-gray-100">
+      {/* Modern Header */}
+      <header className="glass-effect border-b border-gray-200/50 px-6 py-4 shadow-soft">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-medium">
+              <span className="text-white text-xl font-bold">🔗</span>
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Workflow Builder</h1>
+              <p className="text-sm text-gray-500">Build powerful automation workflows</p>
             </div>
           </div>
-        ) : (
+          
+          <div className="flex items-center space-x-3">
+            <button 
+              className="btn-info inline-flex items-center space-x-2"
+              onClick={() => setShowArchSummary(true)}
+            >
+              <span>📋</span>
+              <span>Architecture</span>
+            </button>
+            <button 
+              className="btn-primary inline-flex items-center space-x-2"
+              onClick={() => setShowTriggerModal(true)}
+            >
+              <span>⚡</span>
+              <span>Add Trigger</span>
+            </button>
+            <button 
+              className="btn-secondary inline-flex items-center space-x-2"
+              onClick={() => setShowActionModal(true)}
+            >
+              <span>🎯</span>
+              <span>Add Action</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left Sidebar */}
+        <aside className="w-80 glass-effect border-r border-gray-200/50 overflow-y-auto">
+          <WorkflowControlPanel
+            workflow={workflowData}
+            onSave={handleSaveWorkflow}
+            onExecute={handleExecuteWorkflow}
+            onClear={handleClearWorkflow}
+            isExecuting={isExecuting}
+          />
+        </aside>
+
+        {/* Canvas Area */}
+        <main className="flex-1 relative bg-white">
           <ReactFlow
             nodes={nodes}
             edges={edges}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
-            onNodeClick={onNodeClick}
             nodeTypes={customNodeTypes}
             fitView
-            attributionPosition="bottom-left"
+            className="bg-gray-50"
           >
-            <Controls />
-            <MiniMap 
-              nodeColor={(node) => {
-                if (node.type === 'trigger') return '#4299e1';
-                if (node.type === 'action') return '#48bb78';
-                if (node.type === 'condition') return '#9f7aea';
-                return '#718096';
-              }}
+            <Background 
+              color="#e2e8f0" 
+              gap={20} 
+              size={1}
+              variant={BackgroundVariant.Dots} 
             />
-            <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
-            
-            {/* Workflow Control Panel */}
-            <Panel position="top-left">
-              <div className="workflow-panel">
-                <h3>{workflowName}</h3>
-                <div className="panel-buttons">
-                  <button 
-                    className="panel-btn save" 
-                    onClick={saveWorkflow}
-                    disabled={nodes.length === 0}
-                  >
-                    💾 Save
-                  </button>
-                  <button 
-                    className="panel-btn execute" 
-                    onClick={executeWorkflow}
-                    disabled={nodes.length === 0 || isExecuting}
-                  >
-                    {isExecuting ? '⏳ Running...' : '▶️ Execute'}
-                  </button>
-                  <button 
-                    className="panel-btn clear" 
-                    onClick={clearWorkflow}
-                  >
-                    🗑️ Clear
-                  </button>
-                </div>
-              </div>
-            </Panel>
-
-            {/* Execution Status Panel */}
-            {executionHistory.length > 0 && (
-              <Panel position="bottom-right">
-                <div className="execution-panel">
-                  <h4>Recent Executions</h4>
-                  <div className="execution-list">
-                    {executionHistory.slice(-3).map((exec, idx) => (
-                      <div key={idx} className="execution-item">
-                        <span className="exec-time">
-                          {exec.timestamp.toLocaleTimeString()}
-                        </span>
-                        <span className="exec-status">✅</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </Panel>
-            )}
+            <Controls 
+              className="shadow-medium"
+              showZoom={true}
+              showFitView={true}
+              showInteractive={true}
+            />
+            <MiniMap 
+              className="shadow-medium"
+              nodeColor={(node) => {
+                if (node.type === 'trigger') return '#3b82f6';
+                if (node.type === 'action') return '#10b981';
+                if (node.type === 'condition') return '#f59e0b';
+                return '#6b7280';
+              }}
+              nodeStrokeWidth={2}
+              pannable
+              zoomable
+            />
           </ReactFlow>
-        )}
+        </main>
+
+        {/* Right Sidebar */}
+        <aside className="w-80 glass-effect border-l border-gray-200/50 overflow-y-auto">
+          <ExecutionPanel
+            executionResults={executionResults}
+            isExecuting={isExecuting}
+          />
+        </aside>
       </div>
 
-      {/* Trigger Selection Modal */}
-      {showTriggerModal && (
-        <div className="modal-overlay">
-          <div className="modal-content trigger-modal">
-            <div className="modal-header">
-              <h2>🚀 Choose a Trigger</h2>
-              <p>Select what starts your workflow</p>
-              <button className="close-btn" onClick={() => setShowTriggerModal(false)}>×</button>
-            </div>
-            <div className="modal-body">
-              <div className="trigger-grid">
-                {triggerTypes.map((trigger) => (
-                  <div
-                    key={trigger.id}
-                    className="trigger-card"
-                    onClick={() => handleTriggerSelect(trigger)}
-                  >
-                    <div className="trigger-icon" style={{ backgroundColor: trigger.color }}>
-                      {trigger.icon}
-                    </div>
-                    <h3>{trigger.name}</h3>
-                    <p>{trigger.description}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Modals */}
+      <TriggerModal
+        isOpen={showTriggerModal}
+        onClose={() => setShowTriggerModal(false)}
+        onSelectTrigger={handleSelectTrigger}
+      />
 
-      {/* Action Selection Modal */}
-      {showActionModal && (
-        <div className="modal-overlay">
-          <div className="modal-content action-modal">
-            <div className="modal-header">
-              <h2>⚡ Choose an Action</h2>
-              <p>Select what your workflow should do</p>
-              <button className="close-btn" onClick={() => setShowActionModal(false)}>×</button>
-            </div>
-            <div className="modal-body">
-              <div className="action-grid">
-                {actionServices.map((action) => (
-                  <div
-                    key={action.id}
-                    className="action-card"
-                    onClick={() => handleActionSelect(action)}
-                  >
-                    <div className="action-icon" style={{ backgroundColor: action.color }}>
-                      {action.icon}
-                    </div>
-                    <h3>{action.name}</h3>
-                    <p>{action.description}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <ActionModal
+        isOpen={showActionModal}
+        onClose={() => setShowActionModal(false)}
+        onSelectAction={handleSelectAction}
+      />
 
-      {/* Debug/Response Section */}
-      <div className="debug-section">
-        <h3>🔍 Workflow Status</h3>
-        <div className="status-grid">
-          <div className="status-card">
-            <h4>Nodes</h4>
-            <span className="status-count">{nodes.length}</span>
-          </div>
-          <div className="status-card">
-            <h4>Connections</h4>
-            <span className="status-count">{edges.length}</span>
-          </div>
-          <div className="status-card">
-            <h4>Executions</h4>
-            <span className="status-count">{executionHistory.length}</span>
-          </div>
-        </div>
-        
-        {response && (
-          <div className="response-container">
-            <h4>Latest Response:</h4>
-            <pre>{response}</pre>
-          </div>
-        )}
-      </div>
+      <ArchitectureSummary
+        isVisible={showArchSummary}
+        onClose={() => setShowArchSummary(false)}
+      />
     </div>
   );
-}
+};
+
+export default App;

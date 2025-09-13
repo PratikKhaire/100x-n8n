@@ -51,3 +51,42 @@ export interface ExecutionResult {
   result: any;
   message?: string;
 }
+
+// Node-specific props for ReactFlow components
+export interface BaseNodeProps {
+  id: string;
+  data: {
+    label: string;
+    status?: 'ready' | 'executing' | 'executed' | 'error';
+  };
+}
+
+export interface TriggerNodeProps extends BaseNodeProps {
+  data: {
+    label: string;
+    type: string;
+    icon: string;
+    color: string;
+    status: 'ready' | 'executing' | 'executed' | 'error';
+  };
+}
+
+export interface ActionNodeProps extends BaseNodeProps {
+  data: {
+    label: string;
+    type: string;
+    icon: string;
+    color: string;
+    status: 'ready' | 'executing' | 'executed' | 'error';
+  };
+}
+
+export interface ConditionNodeProps extends BaseNodeProps {
+  data: {
+    label: string;
+    type: string;
+    icon: string;
+    color: string;
+    status: 'ready' | 'executing' | 'executed' | 'error';
+  };
+}
