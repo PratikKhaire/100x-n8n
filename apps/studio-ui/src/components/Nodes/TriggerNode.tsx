@@ -2,13 +2,26 @@ import React from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { TriggerNodeProps } from '../../types/workflow';
 
-export const TriggerNode: React.FC<TriggerNodeProps> = ({ data }) => (
-  <div className={`relative bg-white rounded-xl shadow-medium hover:shadow-strong transition-all duration-200 border-2 min-w-[200px] ${
+export const TriggerNode: React.FC<TriggerNodeProps> = ({ id,data }) => {
+  const handleDelete = ( e:React.MouseEvent) =>{
+    e.stopPropagation();
+    const deleteEvent  = new CustomEvent('deleteNode', { detail:{nodeId:id}})
+    window.dispatchEvent(deleteEvent);
+  };
+
+ return (
+    <div className={`relative bg-white rounded-xl shadow-medium hover:shadow-strong transition-all duration-200 border-2 min-w-[200px] ${
     data.status === 'ready' ? 'border-gray-200' :
     data.status === 'executing' ? 'border-yellow-400 ring-4 ring-yellow-100' :
     data.status === 'executed' ? 'border-green-400 ring-4 ring-green-100' :
     'border-red-400 ring-4 ring-red-100'
   }`}>
+
+    {/* delete button  */}
+
+    <button onClick={handleDelete}
+    className=' absolute -top-2 -left-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex item-center justify-center text-xs transition-color z-10 shadow-medium'
+    title='delete trigger'> x </button>
     {/* Status indicator */}
     <div className={`absolute -top-2 -right-2 w-6 h-6 rounded-full border-2 border-white shadow-soft flex items-center justify-center text-xs ${
       data.status === 'ready' ? 'bg-gray-400' :
@@ -58,5 +71,5 @@ export const TriggerNode: React.FC<TriggerNodeProps> = ({ data }) => (
 
     {/* Handles */}
     <Handle type="source" position={Position.Right} className="!w-4 !h-4 !bg-blue-500 !border-2 !border-white hover:!w-5 hover:!h-5 transition-all" />
-  </div>
-);
+  </div>);
+};

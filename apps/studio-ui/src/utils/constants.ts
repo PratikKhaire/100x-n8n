@@ -73,6 +73,17 @@ export const ACTIONS: ActionService[] = [
 
 // API Endpoints
 export const API_ENDPOINTS = {
-  WORKFLOWS: 'http://localhost:3002/api/workflows',
-  EXECUTE: 'http://localhost:3002/api/execute'
+  BASE_URL: 'http://localhost:3003', // <- Change to match your server port
+  WORKFLOWS: {
+    CREATE: '/api/v1/workflows',
+    LIST: '/api/v1/workflows',
+    EXECUTE: '/workflow/execute'
+  }
+};
+
+
+// Add the missing UI_CONSTANTS
+export const UI_CONSTANTS = {
+  DEFAULT_NODE_POSITION: { x: 100, y: 100 },
+  NODE_SPACING: 200
 };

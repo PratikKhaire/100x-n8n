@@ -62,6 +62,7 @@ export interface BaseNodeProps {
 }
 
 export interface TriggerNodeProps extends BaseNodeProps {
+    id:string;
   data: {
     label: string;
     type: string;
@@ -72,6 +73,7 @@ export interface TriggerNodeProps extends BaseNodeProps {
 }
 
 export interface ActionNodeProps extends BaseNodeProps {
+    id:string;
   data: {
     label: string;
     type: string;
@@ -82,6 +84,7 @@ export interface ActionNodeProps extends BaseNodeProps {
 }
 
 export interface ConditionNodeProps extends BaseNodeProps {
+    id:string;
   data: {
     label: string;
     type: string;

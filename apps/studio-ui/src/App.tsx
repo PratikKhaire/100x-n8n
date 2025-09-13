@@ -32,6 +32,7 @@ import { ArchitectureSummary } from './components/ArchitectureSummary';
 import { TriggerType, ActionService, ExecutionResult } from './types/workflow';
 
 import './index.css';
+import { useEffect } from 'react';
 
 const App: React.FC = () => {
   // Core ReactFlow state
@@ -50,6 +51,26 @@ const App: React.FC = () => {
   // Custom hooks
   const { saveWorkflow, executeWorkflow } = useWorkflowAPI();
 
+  // Delete node function
+  const deleteNode = useCallback((nodeId: string) => {
+    setNodes(prevNodes => prevNodes.filter(node => node.id !== nodeId));
+    setEdges(prevEdges => prevEdges.filter(edge => edge.source !== nodeId && edge.target !== nodeId));
+  }, []);
+
+  // Listen for node deletion event 
+  useEffect(() => {
+    const handleDeleteNode = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const { nodeId } = customEvent.detail;
+      deleteNode(nodeId);
+    };
+
+    window.addEventListener('deleteNode', handleDeleteNode);
+    
+    return () => {
+      window.removeEventListener('deleteNode', handleDeleteNode);
+    };
+  }, [deleteNode]);
   // ReactFlow event handlers
   const onNodesChange: OnNodesChange = useCallback(
     (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
@@ -208,6 +229,9 @@ const App: React.FC = () => {
   };
 
   return (
+
+
+    // window.removeEventListener('deleteNode', handleDeleteNode);
     <div className="flex flex-col h-screen bg-gradient-to-br from-slate-50 to-gray-100">
       {/* Modern Header */}
       <header className="glass-effect border-b border-gray-200/50 px-6 py-4 shadow-soft">
@@ -331,3 +355,4 @@ const App: React.FC = () => {
 };
 
 export default App;
+

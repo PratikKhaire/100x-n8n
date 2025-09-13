@@ -2,13 +2,27 @@ import React from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { ActionNodeProps } from '../../types/workflow';
 
-export const ActionNode: React.FC<ActionNodeProps> = ({ data }) => (
+export const ActionNode: React.FC<ActionNodeProps> = ({id, data }) => {
+  
+  const handleDelete = (e:React.MouseEvent ) => {
+    e.stopPropagation();
+    const deleteEvent = new CustomEvent('deleteNode', { detail:{ nodeId: id}})
+    window.dispatchEvent(deleteEvent);
+  }
+  return (
   <div className={`relative bg-white rounded-xl shadow-medium hover:shadow-strong transition-all duration-200 border-2 min-w-[200px] ${
     data.status === 'ready' ? 'border-gray-200' :
     data.status === 'executing' ? 'border-yellow-400 ring-4 ring-yellow-100' :
     data.status === 'executed' ? 'border-green-400 ring-4 ring-green-100' :
     'border-red-400 ring-4 ring-red-100'
   }`}>
+
+
+    {/* Delete button */}
+
+    <button onClick={handleDelete}
+    className="absolute -top-2 -left-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors z-10 shadow-medium"
+    title = "Delete action"> x </button>
     {/* Status indicator */}
     <div className={`absolute -top-2 -right-2 w-6 h-6 rounded-full border-2 border-white shadow-soft flex items-center justify-center text-xs ${
       data.status === 'ready' ? 'bg-gray-400' :
@@ -63,4 +77,5 @@ export const ActionNode: React.FC<ActionNodeProps> = ({ data }) => (
     <Handle type="target" position={Position.Left} className="!w-4 !h-4 !bg-green-500 !border-2 !border-white hover:!w-5 hover:!h-5 transition-all" />
     <Handle type="source" position={Position.Right} className="!w-4 !h-4 !bg-green-500 !border-2 !border-white hover:!w-5 hover:!h-5 transition-all" />
   </div>
-);
+  );
+};
