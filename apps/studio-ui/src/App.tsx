@@ -51,26 +51,27 @@ const App: React.FC = () => {
   // Custom hooks
   const { saveWorkflow, executeWorkflow } = useWorkflowAPI();
 
-  // Delete node function
-  const deleteNode = useCallback((nodeId: string) => {
-    setNodes(prevNodes => prevNodes.filter(node => node.id !== nodeId));
-    setEdges(prevEdges => prevEdges.filter(edge => edge.source !== nodeId && edge.target !== nodeId));
-  }, []);
+  
+// Node deletion event handler
+const handleDeleteNode = (event: Event) => {
+  const customEvent = event as CustomEvent<{ nodeId: string }>;
+  const { nodeId } = customEvent.detail;
+  deleteNode(nodeId);
+};
 
-  // Listen for node deletion event 
-  useEffect(() => {
-    const handleDeleteNode = (event: Event) => {
-      const customEvent = event as CustomEvent;
-      const { nodeId } = customEvent.detail;
-      deleteNode(nodeId);
-    };
+// Listen for node deletion event
+useEffect(() => {
+  window.addEventListener('deleteNode', handleDeleteNode);
+  return () => {
+    window.removeEventListener('deleteNode', handleDeleteNode);
+  };
+}, []);
 
-    window.addEventListener('deleteNode', handleDeleteNode);
-    
-    return () => {
-      window.removeEventListener('deleteNode', handleDeleteNode);
-    };
-  }, [deleteNode]);
+//del node function
+const deleteNode = useCallback((nodeId:string) =>{
+  setNodes(prevNodes => prevNodes.filter(node=> node.id !== nodeId));
+  setEdges(prevEdges => prevEdges.filter(edge=> edge.source !== nodeId && edge.target !== nodeId));
+},[]);
   // ReactFlow event handlers
   const onNodesChange: OnNodesChange = useCallback(
     (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),

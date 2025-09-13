@@ -3,9 +3,9 @@ import { Handle, Position } from '@xyflow/react';
 import { ConditionNodeProps } from '../../types/workflow';
 
 export const ConditionNode: React.FC<ConditionNodeProps> = ({ id, data }) => {
-    const handleDelete = (e: React.MouseEvent) => {
+    const handleDelete= (e:React.MouseEvent)=>{
         e.stopPropagation();
-        const deleteEvent = new CustomEvent('deleteNode', { detail: { nodeId: id } });
+        const deleteEvent = new CustomEvent('deleteNode', { detail:{nodeId:id}})
         window.dispatchEvent(deleteEvent);
     };
 return(
