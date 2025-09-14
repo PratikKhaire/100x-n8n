@@ -199,12 +199,22 @@ const deleteNode = useCallback((nodeId:string) =>{
   // Node creation handlers
   const handleSelectTrigger = (trigger: TriggerType) => {
     const newNode = createTriggerNode(trigger);
-    setNodes(prev => [...prev, newNode]);
+    console.log('Creating trigger node:', newNode);
+    setNodes(prev => {
+      const updated = [...prev, newNode];
+      console.log('Updated nodes after trigger:', updated);
+      return updated;
+    });
   };
 
   const handleSelectAction = (action: ActionService) => {
     const newNode = createActionNode(action);
-    setNodes(prev => [...prev, newNode]);
+    console.log('Creating action node:', newNode);
+    setNodes(prev => {
+      const updated = [...prev, newNode];
+      console.log('Updated nodes after action:', updated);
+      return updated;
+    });
   };
 
   // Create workflow data object for components

@@ -9,7 +9,7 @@ export const TriggerNode: React.FC<TriggerNodeProps> = ({ id,data }) => {
     window.dispatchEvent(deleteEvent);
   };
 
- return (
+  return (
     <div className={`relative bg-white rounded-xl shadow-medium hover:shadow-strong transition-all duration-200 border-2 min-w-[200px] ${
     data.status === 'ready' ? 'border-gray-200' :
     data.status === 'executing' ? 'border-yellow-400 ring-4 ring-yellow-100' :
