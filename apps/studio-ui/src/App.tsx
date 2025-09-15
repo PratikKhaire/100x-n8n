@@ -27,6 +27,7 @@ import { customNodeTypes } from './components/Nodes';
 import { TriggerModal, ActionModal } from './components/Modals';
 import { WorkflowControlPanel, ExecutionPanel } from './components/Panels';
 import { ArchitectureSummary } from './components/ArchitectureSummary';
+import { ThemeToggle } from './components/ThemeToggle';
 
 // Import types
 import { TriggerType, ActionService, ExecutionResult } from './types/workflow';
@@ -50,6 +51,24 @@ const App: React.FC = () => {
 
   // Custom hooks
   const { saveWorkflow, executeWorkflow } = useWorkflowAPI();
+
+  // Add a test node on component mount to verify rendering
+  React.useEffect(() => {
+    const testNode: Node = {
+      id: 'test-node',
+      type: 'trigger',
+      position: { x: 100, y: 100 },
+      data: {
+        label: 'Test Trigger',
+        type: 'webhook',
+        icon: '🔗',
+        color: '#4F46E5',
+        status: 'ready'
+      }
+    };
+    setNodes([testNode]);
+    console.log('Added test node:', testNode);
+  }, []);
 
   
 // Node deletion event handler
@@ -240,107 +259,215 @@ const deleteNode = useCallback((nodeId:string) =>{
   };
 
   return (
+    <div className="flex flex-col h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+      {/* Floating background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-primary rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-float"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-secondary rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-float" style={{animationDelay: '2s'}}></div>
+        <div className="absolute top-40 left-1/2 w-60 h-60 bg-gradient-success rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-float" style={{animationDelay: '4s'}}></div>
+      </div>
 
-
-    // window.removeEventListener('deleteNode', handleDeleteNode);
-    <div className="flex flex-col h-screen bg-gradient-to-br from-slate-50 to-gray-100">
-      {/* Modern Header */}
-      <header className="glass-effect border-b border-gray-200/50 px-6 py-4 shadow-soft">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-medium">
-              <span className="text-white text-xl font-bold">🔗</span>
+      {/* Premium Glass Header */}
+      <header className="header relative z-10">
+        <div className="flex h-20 items-center justify-between px-8">
+          <div className="flex items-center space-x-4">
+            <div className="relative">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-primary text-white shadow-colored animate-glow">
+                <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                </svg>
+              </div>
+              <div className="absolute -top-1 -right-1 h-4 w-4 bg-gradient-success rounded-full animate-ping"></div>
+              <div className="absolute -top-1 -right-1 h-4 w-4 bg-success rounded-full"></div>
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Workflow Builder</h1>
-              <p className="text-sm text-gray-500">Build powerful automation workflows</p>
+              <h1 className="text-2xl font-bold text-gradient">FlowCraft Studio</h1>
+              <p className="text-sm text-muted-foreground">Professional Automation Platform</p>
             </div>
           </div>
           
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-4">
+            <div className="hidden md:flex items-center space-x-2 px-4 py-2 rounded-xl bg-muted/50 backdrop-blur-sm">
+              <div className="status-indicator">
+                <div className="ping bg-success"></div>
+                <div className="dot bg-success"></div>
+              </div>
+              <span className="text-xs font-medium text-muted-foreground">System Online</span>
+            </div>
+            
+            <ThemeToggle />
+            
             <button 
-              className="btn-info inline-flex items-center space-x-2"
+              className="btn btn-ghost"
               onClick={() => setShowArchSummary(true)}
             >
-              <span>📋</span>
-              <span>Architecture</span>
+              <svg className="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Docs
             </button>
-            <button 
-              className="btn-primary inline-flex items-center space-x-2"
-              onClick={() => setShowTriggerModal(true)}
-            >
-              <span>⚡</span>
-              <span>Add Trigger</span>
-            </button>
-            <button 
-              className="btn-secondary inline-flex items-center space-x-2"
-              onClick={() => setShowActionModal(true)}
-            >
-              <span>🎯</span>
-              <span>Add Action</span>
-            </button>
+            
+            <div className="flex items-center space-x-2">
+              <button 
+                className="btn btn-primary relative overflow-hidden group"
+                onClick={() => setShowTriggerModal(true)}
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <svg className="mr-2 h-4 w-4 relative z-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <span className="relative z-10">Add Trigger</span>
+              </button>
+              
+              <button 
+                className="btn btn-secondary relative overflow-hidden group"
+                onClick={() => setShowActionModal(true)}
+              >
+                <div className="absolute inset-0 bg-gradient-success opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <svg className="mr-2 h-4 w-4 relative z-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                </svg>
+                <span className="relative z-10">Add Action</span>
+              </button>
+            </div>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Left Sidebar */}
-        <aside className="w-80 glass-effect border-r border-gray-200/50 overflow-y-auto">
-          <WorkflowControlPanel
-            workflow={workflowData}
-            onSave={handleSaveWorkflow}
-            onExecute={handleExecuteWorkflow}
-            onClear={handleClearWorkflow}
-            isExecuting={isExecuting}
-          />
+      {/* Premium Dashboard Layout */}
+      <div className="flex flex-1 overflow-hidden relative z-10">
+        {/* Floating Left Sidebar */}
+        <aside className="w-80 p-6">
+          <div className="card h-full">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-lg font-semibold text-foreground">Workflow Canvas</h2>
+                  <p className="text-sm text-muted-foreground">Build powerful automations</p>
+                </div>
+                <div className="status-indicator">
+                  <div className="ping bg-success"></div>
+                  <div className="dot bg-success"></div>
+                </div>
+              </div>
+              
+              {/* Premium Stats Cards */}
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="card-secondary">
+                  <div className="p-4">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 rounded-xl bg-gradient-primary text-white shadow-colored">
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-2xl font-bold text-gradient">{nodes.filter(n => n.type === 'trigger').length}</p>
+                        <p className="text-xs text-muted-foreground">Triggers</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="card-secondary">
+                  <div className="p-4">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 rounded-xl bg-gradient-success text-white shadow-colored">
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-2xl font-bold text-gradient">{nodes.filter(n => n.type === 'action').length}</p>
+                        <p className="text-xs text-muted-foreground">Actions</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-6 overflow-y-auto">
+                <WorkflowControlPanel
+                  workflow={workflowData}
+                  onSave={handleSaveWorkflow}
+                  onExecute={handleExecuteWorkflow}
+                  onClear={handleClearWorkflow}
+                  isExecuting={isExecuting}
+                />
+              </div>
+            </div>
+          </div>
         </aside>
 
-        {/* Canvas Area */}
-        <main className="flex-1 relative bg-white">
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            nodeTypes={customNodeTypes}
-            fitView
-            className="bg-gray-50"
-          >
-            <Background 
-              color="#e2e8f0" 
-              gap={20} 
-              size={1}
-              variant={BackgroundVariant.Dots} 
-            />
-            <Controls 
-              className="shadow-medium"
-              showZoom={true}
-              showFitView={true}
-              showInteractive={true}
-            />
-            <MiniMap 
-              className="shadow-medium"
-              nodeColor={(node) => {
-                if (node.type === 'trigger') return '#3b82f6';
-                if (node.type === 'action') return '#10b981';
-                if (node.type === 'condition') return '#f59e0b';
-                return '#6b7280';
-              }}
-              nodeStrokeWidth={2}
-              pannable
-              zoomable
-            />
-          </ReactFlow>
+        {/* Premium Canvas Area */}
+        <main className="flex-1 relative p-6">
+          <div className="card h-full">
+            <div className="absolute inset-0 rounded-xl overflow-hidden">
+              <ReactFlow
+                nodes={nodes}
+                edges={edges}
+                onNodesChange={onNodesChange}
+                onEdgesChange={onEdgesChange}
+                onConnect={onConnect}
+                nodeTypes={customNodeTypes}
+                fitView
+                className="rounded-xl"
+                style={{
+                  background: 'transparent'
+                }}
+              >
+                <Background 
+                  color="hsl(var(--muted-foreground) / 0.1)" 
+                  gap={24} 
+                  size={1.5}
+                  variant={BackgroundVariant.Dots} 
+                />
+                <Controls 
+                  className="!shadow-elegant !bg-card/80 !backdrop-blur-sm !border-border/50 !rounded-xl"
+                  showZoom={true}
+                  showFitView={true}
+                  showInteractive={true}
+                />
+                <MiniMap 
+                  className="!shadow-elegant !bg-card/80 !backdrop-blur-sm !border-border/50 !rounded-xl"
+                  nodeColor={(node) => {
+                    if (node.type === 'trigger') return 'hsl(var(--primary))';
+                    if (node.type === 'action') return 'hsl(var(--success))';
+                    if (node.type === 'condition') return 'hsl(var(--warning))';
+                    return 'hsl(var(--muted-foreground))';
+                  }}
+                  nodeStrokeWidth={2}
+                  pannable
+                  zoomable
+                />
+              </ReactFlow>
+            </div>
+          </div>
         </main>
 
-        {/* Right Sidebar */}
-        <aside className="w-80 glass-effect border-l border-gray-200/50 overflow-y-auto">
-          <ExecutionPanel
-            executionResults={executionResults}
-            isExecuting={isExecuting}
-          />
+        {/* Floating Right Sidebar */}
+        <aside className="w-80 p-6">
+          <div className="card h-full">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-lg font-semibold text-foreground">Execution Monitor</h2>
+                  <p className="text-sm text-muted-foreground">Real-time workflow insights</p>
+                </div>
+                <div className={`status-indicator ${isExecuting ? 'animate-pulse' : ''}`}>
+                  <div className={`ping ${isExecuting ? 'bg-warning' : 'bg-success'}`}></div>
+                  <div className={`dot ${isExecuting ? 'bg-warning' : 'bg-success'}`}></div>
+                </div>
+              </div>
+              
+              <div className="space-y-6 overflow-y-auto">
+                <ExecutionPanel
+                  executionResults={executionResults}
+                  isExecuting={isExecuting}
+                />
+              </div>
+            </div>
+          </div>
         </aside>
       </div>
 
